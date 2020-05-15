@@ -1,0 +1,88 @@
+#!/usr/bin/env python3
+
+import os, sys
+from pathlib import Path
+import argparse
+
+def find_links_to_dotkeep(dotkeep):
+    links = []
+
+    # Walk through home directory recursively.
+    for root, _, files in os.walk(Path.home()):
+        for filename in files:
+            # Check if the link points to within the dotkeep.
+            fullpath = f'{root}/{filename}'
+            if os.path.islink(fullpath) and os.path.realpath(fullpath).startswith(dotkeep) and not fullpath.startswith(dotkeep):
+                if args.separator in fullpath:
+                    print(f'File "{fullpath}" has the separator in its path and will be skipped', file=sys.stderr)
+                    continue
+                links.append((os.path.realpath(fullpath), fullpath))
+
+    return list(map(lambda paths: (paths[0].replace(str(Path.home()), '~'), paths[1].replace(str(Path.home()), '~')), links))
+
+def do_save_links(dotkeep):
+    # Make sure we can write to the record file.
+    if os.path.exists(args.links_file):
+        if not os.access(args.links_file, os.W_OK):
+            raise IOError(f'unable to write to links file "{args.links_file}"')
+
+    with open(args.links_file, 'w+') as links_file:
+        for realpath, linkpath in find_links_to_dotkeep(dotkeep):
+            print(f'{linkpath} -> {realpath}')
+            links_file.write(f'{realpath}{args.separator}{linkpath}\n')
+
+def do_restore_links(dotkeep):
+    links = []
+    
+    if not os.path.exists(args.links_file) or not os.access(args.links_file, os.R_OK):
+        raise IOError(f'unable to read from links file "{args.links_file}"')
+
+    with open(args.links_file, 'r') as links_file:
+        for line in links_file.readlines():
+            splitted = line.strip().split(args.separator)
+            if len(splitted) != 2:
+                raise IOError(f'invalid separator pattern: {line}')
+            
+            links.append((splitted[0].replace('~', str(Path.home())), splitted[1].replace('~', str(Path.home()))))
+
+    for realpath, linkpath in links:
+        print(f'Restoring {linkpath} -> {realpath}')
+
+        if os.path.exists(linkpath):
+            if os.path.islink(linkpath) and os.path.realpath(linkpath) == realpath:
+                # This exact link has already been created.
+                continue
+            
+            print(f'A link already exists at "{linkpath}". Overwrite it? [y/n] ', end='')
+            choice = input().lower()
+
+            if choice == 'y':
+                os.remove(linkpath)
+            else:
+                continue
+
+        os.symlink(realpath, linkpath)
+
+def main():
+    # Find the real path of the dotkeep.
+    dotkeep_link = f'{Path.home()}/.dotkeep-link'
+
+    if not os.path.islink(dotkeep_link) or not os.path.isdir(os.path.realpath(dotkeep_link)):
+        print(f'"{dotkeep_link}" must be a symbolic link pointing to a directory.', file=sys.stderr)
+        sys.exit(1)
+
+    dotkeep = os.path.realpath(dotkeep_link)
+    print(f'Dotkeep found at "{dotkeep}".')
+
+    if args.action == 'save':
+        do_save_links(dotkeep)
+    elif args.action == 'restore':
+        do_restore_links(dotkeep)
+
+parser = argparse.ArgumentParser('Organize dotfiles')
+parser.add_argument('action', choices=['save', 'restore'])
+parser.add_argument('--separator', type=str, default='\t')
+parser.add_argument('--links-file', type=str, default='links')
+args = parser.parse_args()
+
+main()
