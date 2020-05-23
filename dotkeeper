@@ -16,7 +16,11 @@ def find_links_to_dotkeep(dotkeep):
                 if args.separator in fullpath:
                     print(f'File "{fullpath}" has the separator in its path and will be skipped', file=sys.stderr)
                     continue
-                links.append((os.path.realpath(fullpath), fullpath))
+                localpath = os.path.realpath(fullpath).split(dotkeep + "/")[1]
+                if not localpath:
+                    # Sanity check.
+                    raise IOError('dotkeep-local path was empty')
+                links.append((localpath, fullpath))
 
     return list(map(lambda paths: (paths[0].replace(str(Path.home()), '~'), paths[1].replace(str(Path.home()), '~')), links))
 
@@ -45,12 +49,14 @@ def do_restore_links(dotkeep):
             
             links.append((splitted[0].replace('~', str(Path.home())), splitted[1].replace('~', str(Path.home()))))
 
-    for realpath, linkpath in links:
+    for localpath, linkpath in links:
+        realpath = f'{dotkeep}/{localpath}'
+
         print(f'Restoring {linkpath} -> {realpath}')
 
         if os.path.exists(linkpath):
             if os.path.islink(linkpath) and os.path.realpath(linkpath) == realpath:
-                # This exact link has already been created.
+                print('  Link already exists')
                 continue
             
             print(f'A link already exists at "{linkpath}". Overwrite it? [y/n] ', end='')
