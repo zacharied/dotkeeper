@@ -8,7 +8,7 @@ def find_links_to_dotkeep(dotkeep):
     links = []
 
     # Walk through home directory recursively.
-    for root, _, files in os.walk(Path.home()):
+    for root, _, files in os.walk(args.search_root):
         for filename in files:
             # Check if the link points to within the dotkeep.
             fullpath = f'{root}/{filename}'
@@ -89,6 +89,7 @@ parser = argparse.ArgumentParser('Organize dotfiles')
 parser.add_argument('action', choices=['save', 'restore'])
 parser.add_argument('--separator', type=str, default='\t')
 parser.add_argument('--links-file', type=str, default='links')
+parser.add_argument('--search-root', type=str, default=Path.home())
 args = parser.parse_args()
 
 main()
