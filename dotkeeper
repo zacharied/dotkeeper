@@ -85,7 +85,7 @@ def main():
     elif args.action == 'restore':
         do_restore_links(dotkeep)
 
-parser = argparse.ArgumentParser('Organize dotfiles')
+parser = argparse.ArgumentParser(prog='dotkeeper', description='Save and restore linked dotfiles')
 parser.add_argument('action', choices=['save', 'restore'])
 parser.add_argument('--separator', '-s', type=str, default='\t')
 parser.add_argument('--links-file', '-f', type=Path, default='links')
