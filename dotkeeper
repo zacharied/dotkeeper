@@ -87,9 +87,9 @@ def main():
 
 parser = argparse.ArgumentParser('Organize dotfiles')
 parser.add_argument('action', choices=['save', 'restore'])
-parser.add_argument('--separator', type=str, default='\t')
-parser.add_argument('--links-file', type=Path, default='links')
-parser.add_argument('--search-root', type=Path, default=Path.home())
+parser.add_argument('--separator', '-s', type=str, default='\t')
+parser.add_argument('--links-file', '-f', type=Path, default='links')
+parser.add_argument('--search-root', '-r', type=Path, default=Path.home())
 args = parser.parse_args()
 
 main()
