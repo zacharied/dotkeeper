@@ -26,11 +26,11 @@ def find_links_to_dotkeep(dotkeep):
 
 def do_save_links(dotkeep):
     # Make sure we can write to the record file.
-    if os.path.exists(args.links_file):
+    if args.links_file.exists():
         if not os.access(args.links_file, os.W_OK):
             raise IOError(f'unable to write to links file "{args.links_file}"')
 
-    with open(args.links_file, 'w+') as links_file:
+    with args.links_file.open('w+') as links_file:
         for realpath, linkpath in find_links_to_dotkeep(dotkeep):
             print(f'{linkpath} -> {realpath}')
             links_file.write(f'{realpath}{args.separator}{linkpath}\n')
@@ -38,10 +38,10 @@ def do_save_links(dotkeep):
 def do_restore_links(dotkeep):
     links = []
     
-    if not os.path.exists(args.links_file) or not os.access(args.links_file, os.R_OK):
+    if not args.links_file.exists() or not os.access(args.links_file, os.R_OK):
         raise IOError(f'unable to read from links file "{args.links_file}"')
 
-    with open(args.links_file, 'r') as links_file:
+    with args.links_file.open('r') as links_file:
         for line in links_file.readlines():
             splitted = line.strip().split(args.separator)
             if len(splitted) != 2:
@@ -88,8 +88,8 @@ def main():
 parser = argparse.ArgumentParser('Organize dotfiles')
 parser.add_argument('action', choices=['save', 'restore'])
 parser.add_argument('--separator', type=str, default='\t')
-parser.add_argument('--links-file', type=str, default='links')
-parser.add_argument('--search-root', type=str, default=Path.home())
+parser.add_argument('--links-file', type=Path, default='links')
+parser.add_argument('--search-root', type=Path, default=Path.home())
 args = parser.parse_args()
 
 main()
