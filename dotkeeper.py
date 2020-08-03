@@ -103,5 +103,5 @@ def main():
 global args
 
 if __name__ == '__main__':
-    load_args(sys.argv, action_required=True)
+    load_args(sys.argv[1:], action_required=True)
     main()
