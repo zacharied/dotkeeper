@@ -21,23 +21,32 @@ class TestSaveMethods(unittest.TestCase):
                 os.remove(f)
 
         os.mkdir(f'{tempdir}/dotkeep') 
-
+    
+        # Link to a file.
         open(f'{tempdir}/dotkeep/target', 'w+').close()
         os.symlink(f'{tempdir}/dotkeep/target', f'{tempdir}/target-link')
 
-        open(f'{tempdir}/dummy', 'w+').close() 
-        os.symlink(f'{tempdir}/dummy', f'{tempdir}/dummy-link')
+        # Link to a directory.
+        os.mkdir(f'{tempdir}/dotkeep/dummy')
+        os.symlink(f'{tempdir}/dotkeep/dummy', f'{tempdir}/dummy-link')
 
     def test_find_links(self):
         # Test that links to the dotkeep are found, and other links are ignored.
         links = dotkeeper.find_links_to_dotkeep(f'{tempdir}/dotkeep')
         self.assertIn(('target', f'{tempdir}/target-link'), links)
-        self.assertEqual(len(links), 1)
+        self.assertIn(('dummy', f'{tempdir}/dummy-link'), links)
+        self.assertEqual(len(links), 2)
 
     def test_save_links(self):
         dotkeeper.do_save_links(f'{tempdir}/dotkeep', silent=True)
         with open(f'{tempdir}/links', 'r') as links_file:
-            self.assertEqual(links_file.read().strip(), f'target\t{tempdir}/target-link')
+            # The lines could be in any order, so we can't just match the whole file.
+            # Instead, we make sure there are the lines representing our links, and then make sure that there are no
+            #  other lines in the file.
+            contents = '\n' + links_file.read().strip() + '\n'
+            self.assertRegex(contents, f'\ntarget\t{tempdir}/target-link\n')
+            self.assertRegex(contents, f'\ndummy\t{tempdir}/dummy-link\n')
+            self.assertEqual(contents.count('\n'), 3)
 
 class TestRestoreMethods(unittest.TestCase):
     def setUp(self):
