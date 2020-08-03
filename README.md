@@ -1,5 +1,7 @@
 # dotkeeper
 
+![Python application](https://github.com/zacharied/dotkeeper/workflows/Python%20application/badge.svg)
+
 This is a script designed for those who like to keep all their dotfiles nested in one directory and create symlinks to
 them around the filesystem.
 
