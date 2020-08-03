@@ -8,11 +8,14 @@ def find_links_to_dotkeep(dotkeep):
     links = []
 
     # Walk through home directory recursively.
-    for root, _, files in os.walk(args.search_root):
-        for filename in files:
+    for root, dirs, files in os.walk(args.search_root):
+        for filename in dirs + files:
             # Check if the link points to within the dotkeep.
             fullpath = f'{root}/{filename}'
-            if os.path.islink(fullpath) and os.path.realpath(fullpath).startswith(dotkeep) and not fullpath.startswith(dotkeep):
+            if os.path.islink(fullpath) and \
+                    os.path.realpath(fullpath).startswith(dotkeep) and \
+                    not fullpath.startswith(dotkeep) and \
+                    not fullpath.startswith(str(Path.home()) + '/.dotkeep-link'):
                 if args.separator in fullpath:
                     print(f'File "{fullpath}" has the separator in its path and will be skipped', file=sys.stderr)
                     continue
